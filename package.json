@@ -1,8 +1,8 @@
 {
   "name": "react-request-hook",
-  "version": "1.0.0",
-  "description": "Concealable Requests and Loading and Error states made easy by React Hooks",
-  "author": "schettino",
+  "version": "1.0.0-alpha.1",
+  "description": "Managed request calls made easy by React Hooks",
+  "author": "Matheus Schettino",
   "license": "MIT",
   "repository": "schettino/use-request-hook",
   "main": "dist/index.js",
@@ -19,7 +19,8 @@
     "start": "rollup -c -w",
     "prepare": "yarn run build",
     "predeploy": "cd example && yarn install && yarn run build",
-    "deploy": "gh-pages -d example/build"
+    "deploy": "gh-pages -d example/build",
+    "prepublishOnly": "yarn run build"
   },
   "dependencies": {},
   "peerDependencies": {
