@@ -1,5 +1,5 @@
 import * as React from 'react';
-import {useResource, useRequest, request, Resource} from './react-request-hook';
+import {useResource, Resource} from './react-request-hook';
 
 const getUser = (): Resource<number> => ({
   url: 'https://reqres.in/api/users',
