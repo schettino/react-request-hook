@@ -4,7 +4,7 @@
   "description": "Managed request calls made easy by React Hooks",
   "author": "Matheus Schettino",
   "license": "MIT",
-  "repository": "schettino/use-request-hook",
+  "repository": "schettino/react-request-hook",
   "main": "dist/index.js",
   "module": "dist/index.es.js",
   "jsnext:main": "dist/index.es.js",
