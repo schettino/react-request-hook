@@ -1,0 +1,6 @@
+.DS_Store
+.vscode
+example
+dist
+vscode
+node_modules
