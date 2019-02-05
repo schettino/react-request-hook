@@ -46,7 +46,10 @@ export function createRequestError(error: AxiosError): RequestError {
   return {
     data,
     message: error.message,
-    code: (data && data.code) || error.code,
+    code:
+      (data && data.code) ||
+      error.code ||
+      (error.response && error.response.status),
     isCancel: axios.isCancel(error),
   };
 }
