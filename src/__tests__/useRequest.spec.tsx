@@ -2,15 +2,28 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import {wait, flushEffects} from 'react-testing-library';
 import {RequestProvider, RequestContext} from '../requestContext';
-import {useRequest} from '../useRequest';
+import {useRequest, UseRequestResult} from '../useRequest';
 import {adapter} from '../../test-utils';
+import {Request} from '../request';
 
 describe('useRequest', () => {
   let reactRoot: HTMLDivElement;
   const axios = adapter.axiosInstance;
+  const onCancel = jest.fn();
+
+  axios.interceptors.response.use(
+    config => config,
+    error => {
+      if (axios.isCancel(error)) {
+        onCancel(error);
+      }
+      throw error;
+    },
+  );
 
   beforeEach(() => {
     axios.mockClear();
+    onCancel.mockClear();
     adapter.reset();
     reactRoot = document.createElement('div');
     document.body.appendChild(reactRoot);
@@ -27,106 +40,87 @@ describe('useRequest', () => {
     );
   }
 
-  function getText() {
-    return reactRoot.textContent;
+  function setup(
+    fn: Request = () => ({
+      url: '/users',
+      method: 'GET',
+    }),
+  ) {
+    const values = {response: {}} as {
+      response: UseRequestResult<any>[0];
+      request: UseRequestResult<any>[1];
+    };
+
+    const Component = () => {
+      const [response, request] = useRequest(fn);
+      Object.assign(values.response, response);
+      values.request = request;
+      return null;
+    };
+
+    render(<Component />);
+    flushEffects();
+    return values;
   }
 
   it('should call the axios instance when it is ready to make the request', () => {
+    adapter.onGet('/users').reply(200, []);
     const source = jest.spyOn(axios.CancelToken, 'source');
-    const Component = () => {
-      const [, request] = useRequest(() => ({url: '/url', method: 'get'}));
-      React.useEffect(() => {
-        request().ready();
-      }, []);
-      return <div />;
-    };
+    const values = setup();
 
-    adapter.onGet('/url').reply(200, []);
-    render(<Component />);
-    flushEffects();
+    values.request().ready();
 
     expect(source).toHaveBeenCalledTimes(1);
     expect(axios).toHaveBeenCalledTimes(1);
     expect(axios).toHaveBeenCalledWith({
-      cancelToken: {promise: Promise.resolve()},
-      url: '/url',
-      method: 'get',
+      cancelToken: {promise: expect.any(Promise)},
+      url: '/users',
+      method: 'GET',
     });
   });
 
   it('should update hasPending properly', async () => {
-    const Component = () => {
-      const [{hasPending}, request] = useRequest(() => ({
-        url: `/url`,
-        method: 'get',
-      }));
-      React.useEffect(() => {
-        const {ready} = request();
-        ready();
-        ready();
-      }, []);
-      return <div>{JSON.stringify(hasPending)}</div>;
-    };
+    adapter.onGet('/users').reply(200, []);
+    const values = setup();
 
-    adapter.onGet('/url').reply(200, []);
+    const {ready} = values.request();
+    ready();
+    ready();
+
     let count = 0;
     axios.interceptors.request.use(config => {
       count++;
       return config;
     });
 
-    render(<Component />);
-    flushEffects();
-
-    expect(getText()).toBe('true');
+    expect(values.response.hasPending).toBe(true);
     await wait(() => {
       if (count === 1) {
-        expect(getText()).toBe('true');
+        expect(values.response.hasPending).toBe(true);
       }
       if (count === 2) {
-        expect(getText()).toBe('false');
+        expect(values.response.hasPending).toBe(false);
       }
     });
   });
 
   it('should resolve with the response data', async () => {
-    const success = jest.fn();
-    const Component = () => {
-      const [, request] = useRequest(() => ({url: '/user/1', method: 'get'}));
-      React.useEffect(() => {
-        request()
-          .ready()
-          .then(success);
-      }, []);
-      return <div />;
-    };
-
-    adapter.onGet('/user/1').reply(200, {id: 1, name: 'Matheus'});
-    render(<Component />);
-    flushEffects();
-
-    await wait(() => expect(success).toHaveBeenCalledTimes(1));
-    expect(success).toHaveBeenCalledWith({id: 1, name: 'Matheus'});
+    adapter.onGet('/users').reply(200, [{id: 1, name: 'luke skywalker'}]);
+    const values = setup();
+    const p = values.request().ready();
+    await expect(p).resolves.toEqual([{id: 1, name: 'luke skywalker'}]);
   });
 
   it('should reject with a normalized error data', async () => {
-    const error = jest.fn();
-    const Component = () => {
-      const [, request] = useRequest(() => ({url: '/user/1', method: 'get'}));
-      React.useEffect(() => {
-        request()
-          .ready()
-          .catch(error);
-      }, []);
-      return <div />;
-    };
-
     adapter.onGet('/user/1').reply(404, {message: 'User not found'});
-    render(<Component />);
-    flushEffects();
+    const values = setup((id: string) => ({
+      url: `/user/${id}`,
+      method: 'get',
+    }));
 
-    await wait(() => expect(error).toHaveBeenCalledTimes(1));
-    expect(error).toHaveBeenCalledWith({
+    const p = values.request('1').ready();
+
+    await expect(p).rejects.toEqual({
       code: 404,
       data: {message: 'User not found'},
       isCancel: false,
@@ -135,125 +129,75 @@ describe('useRequest', () => {
   });
 
   it('should cancel all pending requests when `clear` is called', async () => {
-    const error = jest.fn();
-    const Component = () => {
-      const [totalSuccess, setTotalSuccess] = React.useState(0);
-      const [state, request] = useRequest(() => ({
-        url: '/user/1',
-        method: 'get',
-      }));
+    adapter.onGet('/users').reply(200, []);
 
-      const createRequest = () => {
-        return request()
-          .ready()
-          .then(() => setTotalSuccess(n => n + 1))
-          .catch(error);
-      };
+    const values = setup();
+    const {ready} = values.request();
+    const p1 = ready();
+    const p2 = ready();
+    const p3 = ready();
 
-      React.useEffect(() => {
-        createRequest();
-        createRequest();
-        createRequest();
-      }, []);
+    values.response.clear('clear');
 
-      React.useEffect(() => {
-        // after the first call gets completed, clear the other two
-        if (totalSuccess === 1) {
-          state.clear('clear');
-        }
-      }, [totalSuccess]);
-
-      return <div />;
-    };
-
-    adapter.onGet('/user/1').reply(200);
-    let count = 0;
-    axios.interceptors.request.use(config => {
-      count++;
-      // delay requests after the first one has been called
-      if (count > 1) {
-        return new Promise(resolve => setTimeout(() => resolve(config), 100));
-      }
-      return config;
-    });
-
-    render(<Component />);
-    flushEffects();
-
-    await wait(() => expect(error).toHaveBeenCalledTimes(2));
-    expect(error).toHaveBeenCalledWith({
+    const error = {
       code: undefined,
       data: null,
       isCancel: true,
       message: 'clear',
-    });
-  });
-
-  it('should only cancel the current request when calling a returned canceler', async () => {
-    const error = jest.fn();
-    const Component = () => {
-      const [, request] = useRequest(() => ({
-        url: '/user/1',
-        method: 'get',
-      }));
-
-      React.useEffect(() => {
-        request()
-          .ready()
-          .catch(error);
-        request()
-          .ready()
-          .catch(error);
-        const {ready, cancel} = request();
-        ready().catch(error);
-        cancel('cancel');
-      }, []);
-
-      return <div />;
     };
 
-    adapter.onGet('/user/1').reply(200);
-    render(<Component />);
-    flushEffects();
+    await expect(p1).rejects.toEqual(error);
+    await expect(p2).rejects.toEqual(error);
+    await expect(p3).rejects.toEqual(error);
+  });
 
-    await wait(() => expect(error).toHaveBeenCalledTimes(1));
-    expect(error).toHaveBeenCalledWith({
+  it('should only cancel the current request when calling a canceler', async () => {
+    adapter.onGet('/users').reply(200, []);
+
+    const values = setup();
+    const r1 = values.request();
+    const r2 = values.request();
+
+    const p1 = r1.ready();
+    const p2 = r2.ready();
+
+    r1.cancel('cancel');
+
+    await expect(p1).rejects.toEqual({
       code: undefined,
       data: null,
       isCancel: true,
       message: 'cancel',
     });
+    await expect(p2).resolves.toEqual([]);
+  });
+
+  it('should cancel all requests created from the same factory when calling the canceler', async () => {
+    adapter.onGet('/users').reply(200, []);
+
+    const values = setup();
+    const r1 = values.request();
+    const p1 = r1.ready();
+    const p2 = r1.ready();
+
+    r1.cancel('cancel');
+
+    const error = {
+      code: undefined,
+      data: null,
+      isCancel: true,
+      message: 'cancel',
+    };
+    
+    await expect(p1).rejects.toEqual(error);
+    await expect(p2).rejects.toEqual(error);
   });
 
   it('should cancel pending requests on unmount', async () => {
-    const error = jest.fn();
-    const Component = () => {
-      const [, request] = useRequest(() => ({
-        url: '/user/1',
-        method: 'get',
-      }));
-
-      React.useEffect(() => {
-        request()
-          .ready()
-          .catch(error);
-        request()
-          .ready()
-          .catch(error);
-      }, []);
-
-      return <div />;
-    };
-
-    adapter.onGet('/user/1').reply(200);
-    render(<Component />);
-    flushEffects();
-
+    const values = setup();
+    const p = values.request().ready();
     ReactDOM.unmountComponentAtNode(reactRoot);
-
-    await wait(() => expect(error).toHaveBeenCalledTimes(2));
-
-    expect(error).toHaveBeenCalledWith({
+    await expect(p).rejects.toEqual({
       code: undefined,
       data: null,
       isCancel: true,
