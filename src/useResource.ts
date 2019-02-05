@@ -9,7 +9,7 @@ import {
   Arguments,
 } from './request';
 
-export type useResource<TRequest extends Request> = [
+export type UseResourceResult<TRequest extends Request> = [
   {
     data: Payload<TRequest> | null;
     error: RequestError | null;
@@ -19,15 +19,11 @@ export type useResource<TRequest extends Request> = [
   RequestDispatcher<TRequest>
 ];
 
-export type CreateUseRequestOptions = {
-  cancelOnUnmount?: boolean;
-};
-
 export function useResource<TRequest extends Request>(
   fn: TRequest,
-  defaultParams?: Arguments<TRequest>[],
-): useResource<TRequest> {
-  const [{clear}, createRequest] = useRequest(fn);
+  defaultParams?: Arguments<TRequest>,
+): UseResourceResult<TRequest> {
+  const [{clear, hasPending}, createRequest] = useRequest(fn);
   const [error, setError] = useState<RequestError | null>(null);
   const [data, setData] = useState<Payload<TRequest> | null>(null);
 
@@ -35,7 +31,11 @@ export function useResource<TRequest extends Request>(
     clear('A new request has been made before completing the last one');
     const {ready, cancel} = createRequest(...(args as Arguments<TRequest>));
     ready()
-      .then(setData)
+      .then(data => {
+        if (data) {
+          setData(data);
+        }
+      })
       .catch((error: RequestError) => {
         if (!error.isCancel) {
           setError(error);
@@ -61,7 +61,7 @@ export function useResource<TRequest extends Request>(
       data,
       error,
       cancel: clear,
-      isLoading: !data && !error,
+      isLoading: hasPending,
     },
     request,
   ];
