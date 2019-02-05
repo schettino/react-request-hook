@@ -66,6 +66,7 @@ export function useRequest<TRequest extends Request>(
     (message?: string) => {
       if (sources.length > 0) {
         sources.map(source => source.cancel(message));
+        /* istanbul ignore next */
         if (mountedRef.current) {
           setSources([]);
         }
