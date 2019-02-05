@@ -40,19 +40,23 @@ export function useRequest<TRequest extends Request>(
     (...args: Arguments<TRequest> | any[]) => {
       const config = fn(...args);
       const source = axios.CancelToken.source();
-      setSources(prevSources => [...prevSources, source]);
+
+      const ready = () => {
+        setSources(prevSources => [...prevSources, source]);
+        return axiosInstance!({...config, cancelToken: source.token})
+          .then(response => {
+            removeCancelToken(source.token);
+            return response.data;
+          })
+          .catch((error: AxiosError) => {
+            removeCancelToken(source.token);
+            throw createRequestError(error);
+          });
+      };
+
       return {
+        ready,
         cancel: source.cancel,
-        ready: () =>
-          axiosInstance!({...config, cancelToken: source.token})
-            .then(response => {
-              removeCancelToken(source.token);
-              return response.data;
-            })
-            .catch((error: AxiosError) => {
-              removeCancelToken(source.token);
-              throw createRequestError(error);
-            }),
       };
     },
     [axiosInstance],
@@ -62,7 +66,9 @@ export function useRequest<TRequest extends Request>(
     (message?: string) => {
       if (sources.length > 0) {
         sources.map(source => source.cancel(message));
-        setSources([]);
+        if (mountedRef.current) {
+          setSources([]);
+        }
       }
     },
     [sources],
