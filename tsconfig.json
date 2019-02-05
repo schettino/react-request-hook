@@ -27,7 +27,8 @@
     "noEmit": true,
     "resolveJsonModule": true,
     "skipLibCheck": false,
-    "strict": true
+    "strict": true,
+    "isolatedModules": true
   },
   "include": [
     "src"
