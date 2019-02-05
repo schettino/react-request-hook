@@ -2,8 +2,8 @@ import {useState, useCallback, useContext, useRef, useEffect} from 'react';
 import axios, {
   AxiosError,
   CancelTokenSource,
-  AxiosResponse,
   Canceler,
+  CancelToken,
 } from 'axios';
 import {
   createRequestError,
@@ -26,13 +26,12 @@ export function useRequest<TRequest extends Request>(
 ): UseRequestResult<TRequest> {
   const axiosInstance = useContext(RequestContext);
   const [sources, setSources] = useState<CancelTokenSource[]>([]);
+  const mountedRef = useRef(true);
 
-  const removeCancelToken = (response?: AxiosResponse) => {
-    if (response) {
+  const removeCancelToken = (cancelToken: CancelToken) => {
+    if (mountedRef.current) {
       setSources(prevSources =>
-        prevSources.filter(
-          source => source.token !== response.config.cancelToken,
-        ),
+        prevSources.filter(source => source.token !== cancelToken),
       );
     }
   };
@@ -47,22 +46,24 @@ export function useRequest<TRequest extends Request>(
         ready: () =>
           axiosInstance!({...config, cancelToken: source.token})
             .then(response => {
-              removeCancelToken(response);
+              removeCancelToken(source.token);
               return response.data;
             })
             .catch((error: AxiosError) => {
-              removeCancelToken(error.response);
+              removeCancelToken(source.token);
               throw createRequestError(error);
             }),
       };
     },
-    [fn],
+    [axiosInstance],
   );
 
   const clear = useCallback(
     (message?: string) => {
-      sources.map(source => source.cancel(message));
-      setSources([]);
+      if (sources.length > 0) {
+        sources.map(source => source.cancel(message));
+        setSources([]);
+      }
     },
     [sources],
   );
@@ -75,12 +76,13 @@ export function useRequest<TRequest extends Request>(
   useEffect(() => {
     return () => {
       clearRef.current();
+      mountedRef.current = false;
     };
   }, []);
 
   return [
     {
-      clear: () => clearRef.current(),
+      clear: (message?: string) => clearRef.current(message),
       hasPending: sources.length > 0,
     },
     request,
