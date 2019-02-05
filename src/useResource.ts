@@ -32,9 +32,7 @@ export function useResource<TRequest extends Request>(
     const {ready, cancel} = createRequest(...(args as Arguments<TRequest>));
     ready()
       .then(data => {
-        if (data) {
-          setData(data);
-        }
+        setData(data);
       })
       .catch((error: RequestError) => {
         if (!error.isCancel) {
