@@ -4,7 +4,7 @@ import {RequestProvider} from '../requestContext';
 import {useResource, UseResourceResult} from '../useResource';
 import {wait, flushEffects} from 'react-testing-library';
 import {adapter} from '../../test-utils';
-import {Request} from '../request';
+import {Request, request} from '../request';
 
 describe('useResource', () => {
   let reactRoot: HTMLDivElement;
@@ -41,7 +41,7 @@ describe('useResource', () => {
   }
 
   function setup(
-    fn: Request = () => ({
+    fn: Request = () => request({
       url: '/users',
       method: 'GET',
     }),
@@ -88,6 +88,37 @@ describe('useResource', () => {
     setup().getUsers();
     ReactDOM.unmountComponentAtNode(reactRoot);
     await wait(() => expect(onRequestCancel).toHaveBeenCalledTimes(1));
+  });
+
+  it('should cancel last pending request when changing default params', async () => {
+    adapter.onGet('/users/1').reply(200, {id: '1', name: 'luke'});
+    adapter.onGet('/users/2').reply(200, {id: '2', name: 'vader'});
+    const onSuccess = jest.fn();
+    const Component: React.FC = () => {
+      const [userId, setUserId] = React.useState('1');
+      const [users] = useResource(
+        (id: string) => ({
+          method: 'GET',
+          url: `/users/${id}`,
+        }),
+        [userId],
+      );
+      React.useEffect(() => {
+        if (userId === '1' && users.isLoading) {
+          setUserId('2');
+        }
+        if (users.data) {
+          onSuccess(users.data);
+        }
+      }, [users, userId]);
+      return null;
+    };
+
+    render(<Component />);
+    await wait(() => expect(onSuccess).toHaveBeenCalledTimes(1));
+    expect(onSuccess).toHaveBeenCalledTimes(1);
+    expect(onSuccess).toHaveBeenCalledWith({id: '2', name: 'vader'});
+    expect(onRequestCancel).toHaveBeenCalledTimes(1);
   });
 
   it('should allow one request at time', async () => {
