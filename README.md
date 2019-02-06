@@ -244,14 +244,14 @@ const api = {
 };
 ```
 
-## Examples
-
-The examples folder contains a `/components` folder with different use cases, like infinite scrolling components, search input that triggers the api, and so on. It's currently a working in progress.
-
 And you'll have
 <p align="center">
   <img width="600" src="https://raw.githubusercontent.com/schettino/react-request-hook/master/other/type-hint.png">
 </p>
+
+## Examples
+
+The examples folder contains a `/components` folder with different use cases, like infinite scrolling components, search input that triggers the api, and so on. It's currently a working in progress.
 
 ## Acknowledgement
 
