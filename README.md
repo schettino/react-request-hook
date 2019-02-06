@@ -249,7 +249,9 @@ const api = {
 The examples folder contains a `/components` folder with different use cases, like infinite scrolling components, search input that triggers the api, and so on. It's currently a working in progress.
 
 And you'll have
-![Type hint](https://raw.githubusercontent.com/schettino/react-request-hook/master/other/type-hint.png)
+<p align="center">
+  <img width="600" src="https://raw.githubusercontent.com/schettino/react-request-hook/master/other/type-hint.png">
+</p>
 
 ## Acknowledgement
 
@@ -262,7 +264,6 @@ MIT
 <!-- prettier-ignore-start -->
 
 [axios-request-config]: (https://github.com/axios/axios#request-config)
-
 [npm]: https://www.npmjs.com/package/react-request-hook
 [npm-badge]: https://img.shields.io/npm/v/react-request-hook.svg
 [node]: https://nodejs.org
