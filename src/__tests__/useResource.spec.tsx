@@ -41,10 +41,11 @@ describe('useResource', () => {
   }
 
   function setup(
-    fn: Request = () => request({
-      url: '/users',
-      method: 'GET',
-    }),
+    fn: Request = () =>
+      request({
+        url: '/users',
+        method: 'GET',
+      }),
     dependencies?: any[],
   ) {
     const values = {users: {}} as {
@@ -121,7 +122,7 @@ describe('useResource', () => {
     expect(onRequestCancel).toHaveBeenCalledTimes(1);
   });
 
-  it('should allow one request at time', async () => {
+  it('should allow only one request at time', async () => {
     adapter.onGet('/users').reply(200, []);
 
     const values = setup();
@@ -129,14 +130,15 @@ describe('useResource', () => {
     values.getUsers();
     setTimeout(values.getUsers);
 
-    await wait(() => expect(onRequestCancel).toHaveBeenCalledTimes(1));
-    expect(values.users.data).toEqual([]);
+    await wait(() => expect(values.users.data).toEqual([]));
     expect(values.users.error).toEqual(null);
     expect(values.users.isLoading).toEqual(false);
+    expect(onRequestCancel).toHaveBeenCalledTimes(1);
   });
 
   it('should allow to cancel programmatically a request', async () => {
     adapter.onGet('/users').reply(200, []);
+
     const values = setup();
 
     values.getUsers();
