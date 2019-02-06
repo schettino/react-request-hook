@@ -1,6 +1,6 @@
 {
   "name": "react-request-hook",
-  "version": "1.0.0-alpha.3",
+  "version": "1.0.0",
   "description": "Managed request calls made easy by React Hooks",
   "author": "Matheus Schettino",
   "license": "MIT",
