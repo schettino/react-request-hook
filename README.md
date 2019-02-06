@@ -6,6 +6,7 @@
 [![NPM](https://img.shields.io/npm/v/react-request-hook.svg)][npm]
 [![Build Status][build-badge]][build]
 [![Code Coverage][coverage-badge]][coverage]
+[![Bundle Size][bundle-size-badge]][bundle-size]
 [![PRs Welcome][prs-badge]][prs]
 [![MIT License][license-badge]][license]
 
@@ -14,6 +15,10 @@
 ## Install
 
 ```bash
+# Yarn
+yarn add react-request-hook axios
+
+# NPM
 npm install --save react-request-hook axios
 ```
 
@@ -246,5 +251,7 @@ MIT
 [license]: https://github.com/kentcdodds/react-testing-library/blob/master/LICENSE
 [prs-badge]: https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square
 [prs]: http://makeapullrequest.com
+[bundle-size]: https://bundlephobia.com/result?p=react-request-hook@latest
+[bundle-size-badge]: https://badgen.net/bundlephobia/minzip/react-request-hook@latest
 
 <!-- prettier-ignore-end -->
