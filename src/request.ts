@@ -37,7 +37,7 @@ export function request<TPayload>(
   // as a argument sugar that allow us to extract the payload type easily
   // @ts-ignore
   paylaod?: TPayload,
-): Resource<TPayload> {
+  ): Resource<TPayload> {
   return config;
 }
 

@@ -13,7 +13,7 @@
     "npm": ">=5"
   },
   "scripts": {
-    "test": "react-scripts test --env=jsdom",
+    "test": "react-scripts test --env=jsdom --coverage",
     "test:watch": "react-scripts test --env=jsdom",
     "build": "rollup -c",
     "start": "rollup -c -w",
@@ -26,6 +26,12 @@
     "axios": "^0.18.0",
     "react": "^16.7.0-alpha.2",
     "react-dom": "^16.7.0-alpha.2"
+  },
+  "jest": {
+    "collectCoverageFrom": [
+      "src/**/*.{ts,tsx}",
+      "!src/index.ts"
+    ]
   },
   "devDependencies": {
     "@svgr/rollup": "^2.4.1",
