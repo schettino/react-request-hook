@@ -1,31 +1,13 @@
 import * as React from 'react';
-import {useResource, Resource} from './react-request-hook';
-
-const getUser = (): Resource<number> => ({
-  url: 'https://reqres.in/api/users',
-  method: 'GET',
-});
+import {Sandbox} from './Sandbox';
+import {UserList} from './components/UserList';
 
 function App() {
-  const [, getResource] = useResource(getUser, []);
   return (
-    <span>
-      <a onClick={() => getResource()}>Refresh</a>
-    </span>
+    <Sandbox name="USER_LIST">
+      <UserList />
+    </Sandbox>
   );
 }
 
-function Wrapper() {
-  const [isHidden, setHidden] = React.useState(true);
-  return (
-    <>
-      <a href="#" onClick={() => setHidden(!isHidden)}>
-        Toggle
-      </a>
-      <br />
-      {!isHidden && <App />}
-    </>
-  );
-}
-
-export default Wrapper;
+export default App;

@@ -3,11 +3,12 @@ import {Box, InfiniteScroll, Text} from 'grommet';
 import {useResource} from '../react-request-hook';
 import api, {User} from '../api';
 
-export default function Pagination() {
+export const UserList: React.FC = () => {
   const [usersList, setUsersList] = useState<User[]>([]);
   const [users, getUsers] = useResource(api.getUsers, []);
 
   const onMore = useCallback(() => {
+    console.log('HERE');
     if (users.data && users.data.page < users.data.total_pages) {
       getUsers(users.data.page + 1);
     }
@@ -38,4 +39,4 @@ export default function Pagination() {
       </InfiniteScroll>
     </Box>
   );
-}
+};

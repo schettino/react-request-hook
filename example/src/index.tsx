@@ -1,16 +1,12 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import {RequestProvider} from './react-request-hook';
-import axios from 'axios';
-import Pagination from './components/Paginated';
-
-const axiosInstance = axios.create({
-  baseURL: 'https://reqres.in/api',
-});
+import {StoreContext} from 'redux-react-hook';
+import App from './App';
+import store from './store';
 
 ReactDOM.render(
-  <RequestProvider value={axiosInstance}>
-    <Pagination />
-  </RequestProvider>,
+  <StoreContext.Provider value={store}>
+    <App />
+  </StoreContext.Provider>,
   document.getElementById('root'),
 );
