@@ -3,7 +3,7 @@
 > Managed, cancelable and safely typed requests.
 
 <!-- prettier-ignore-start -->
-[![NPM](https://img.shields.io/npm/v/react-request-hook.svg)][npm]
+[![NPM][npm-badge]][npm]
 [![Build Status][build-badge]][build]
 [![Code Coverage][coverage-badge]][coverage]
 [![Bundle Size][bundle-size-badge]][bundle-size]
@@ -258,7 +258,8 @@ MIT
 
 [axios-request-config]: (https://github.com/axios/axios#request-config)
 
-[npm]: (https://img.shields.io/npm/v/use-request-hook.svg)
+[npm]: https://www.npmjs.com/package/react-request-hook
+[npm-badge]: https://img.shields.io/npm/v/react-request-hook.svg
 [node]: https://nodejs.org
 [build-badge]: https://img.shields.io/travis/schettino/react-request-hook.svg?style=flat-square
 [build]: https://travis-ci.org/schettino/react-request-hook
