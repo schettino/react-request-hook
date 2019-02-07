@@ -12,6 +12,19 @@
 
 <!-- prettier-ignore-end -->
 
+## Table of Contents
+
+- [Install](#install)
+- [Quick Start](#quick-start)
+- [Usage](#usage)
+  - [`useResource`](#useresource)
+  - [`useRequest`](#userequest)
+  - [`request()`](#request)
+  - [`createRequestError()`](#createrequesterror)
+- [Type safety for non typescript projects](#type-safety-for-non-typescript-projects)
+- [Acknowledgement](#acknowledgement)
+- [License](#license)
+
 ## Install
 
 ```bash
@@ -232,6 +245,10 @@ const api = {
 
 And you'll have
 ![Type hint](https://raw.githubusercontent.com/schettino/react-request-hook/master/other/type-hint.png)
+
+## Acknowledgement
+
+Thanks to @kentcdodds for making this implementation a lot easier to test. [create-react-library](https://www.npmjs.com/package/create-react-library) for the initial setup and [Grommet](https://github.com/grommet/grommet) with its great components used in the examples.
 
 ## License
 
