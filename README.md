@@ -168,7 +168,7 @@ useEffect(() => {
 
 ### request
 
-The `request` function allows you to define the response type coming from it. It also helps on creating a good pattern on defining you api calls and results. It's just a identity function that accepts the request config and returns it. Both useRequest and useResource extract the expected and annotated type definition and resolve it on the `response.data` field.
+The `request` function allows you to define the response type coming from it. It also helps on creating a good pattern on defining your api calls and the expected results. It's just a identity function that accepts the request config and returns it. Both useRequest and useResource extract the expected and annotated type definition and resolve it on the `response.data` field.
 
 ```tsx
 const api = {
@@ -224,6 +224,9 @@ const api = {
   },
 };
 ```
+
+And you'll have
+![Type hint](https://raw.githubusercontent.com/schettino/react-request-hook/master/other/type-hint.png)
 
 ## License
 
