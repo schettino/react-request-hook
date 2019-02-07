@@ -1,4 +1,4 @@
-# React Request Hook
+![React Request Hook](https://raw.githubusercontent.com/schettino/react-request-hook/master/other/react-request-hook.png)
 
 > Managed, cancelable and safely typed requests.
 
