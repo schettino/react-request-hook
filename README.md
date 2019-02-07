@@ -22,6 +22,7 @@
   - [`request()`](#request)
   - [`createRequestError()`](#createrequesterror)
 - [Type safety for non typescript projects](#type-safety-for-non-typescript-projects)
+- [Examples](#examples)
 - [Acknowledgement](#acknowledgement)
 - [License](#license)
 
@@ -168,7 +169,7 @@ interface Request {
 }
 ```
 
-By using it, you're responsible for handling the promise resolution. It's still cancel pending requests when unmounting the component.
+By using it, you're responsible for handling the promise resolution. It's still canceling pending requests when unmounting the component.
 
 ```tsx
 useEffect(() => {
@@ -242,6 +243,10 @@ const api = {
   },
 };
 ```
+
+## Examples
+
+The examples folder contains a `/components` folder with different use cases, like infinite scrolling components, search input that triggers the api, and so on. It's currently a working in progress.
 
 And you'll have
 ![Type hint](https://raw.githubusercontent.com/schettino/react-request-hook/master/other/type-hint.png)
