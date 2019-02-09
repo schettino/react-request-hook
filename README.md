@@ -38,7 +38,7 @@ npm install --save react-request-hook axios
 
 ## Quick Start
 
-```tsx
+```jsx
 // Bootstrap
 import {RequestProvider} from 'react-request-hook';
 import axios from 'axios';
@@ -51,34 +51,25 @@ ReactDOM.render(
 );
 ```
 
-```tsx
+```jsx
 // User Profile component
 function UserProfile(props) {
-  const [user, getProfile] = useResource(api.getProfile, [props.userId]);
-  return (
-    <Page>
-      {user.data ? (
-        <Fragment>
-          <Title>{user.data.name}</Title>
-          <Avatar src={user.data.avatarUrl} />
-          <FriendsList userId={user.data.id} getProfile={getProfile} />
-        </Fragment>
-      ) : (
-        <Spinner />
-      )}
-    </Page>
-  );
-}
-```
+  const [profile, getProfile] = useResource(id => {
+    url: `/user/${id}`,
+    method: 'GET'
+  })
 
-```tsx
-// api.ts
-const api = {
-  getProfile: (id: string) => ({
-    url: `/user/profile/${id}`,
-    method: 'GET',
-  }),
-};
+  useEffect(() => getProfile(props.userId), [])
+
+  if(profile.isLoading) return <Spinner />
+
+  return (
+    <ProfileScreen
+      avatar={profile.data.avatar}
+      email={profile.data.email}
+      name={profile.data.name} />
+  )
+}
 ```
 
 ## Usage
@@ -87,10 +78,10 @@ const api = {
 
 The useResource hook manages the request state under the hood. Its high level api allows one request to be made at time. Subsequents requests cancel the previous ones, leaving the call to be made with the most recent data available. The api is intended to be similar to `useState` and `useEffect`.
 
-It requires a function as first argument that is just a [request config][axios-request-config] factory, and returns a tuple with the request state and a function to trigger the request call, which accepts the same arguments as the factory one.
+It requires a function as first argument that is just a [request config][axios-request-config] factory, and returns a tuple with the resource state and a function to trigger the request call, which accepts the same arguments as the factory one.
 
 ```tsx
-const [comments, getComments] = useResource((id: string) => ({
+const [comments, getComments] = useResource(id => ({
   url: `/post/${id}/comments`,
   method: 'get',
 }));
@@ -245,6 +236,7 @@ const api = {
 ```
 
 And you'll have
+
 <p align="center">
   <img width="600" src="https://raw.githubusercontent.com/schettino/react-request-hook/master/other/type-hint.png">
 </p>
