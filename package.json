@@ -1,6 +1,6 @@
 {
   "name": "react-request-hook",
-  "version": "1.0.0",
+  "version": "0.0.0-development",
   "description": "Managed request calls made easy by React Hooks",
   "author": "Matheus Schettino",
   "license": "MIT",
@@ -19,7 +19,8 @@
     "start": "rollup -c -w",
     "predeploy": "cd example && yarn install && yarn run build",
     "deploy": "gh-pages -d example/build",
-    "prepare": "yarn run build"
+    "prepare": "yarn run build",
+    "semantic-release": "semantic-release"
   },
   "dependencies": {},
   "peerDependencies": {
@@ -57,7 +58,8 @@
     "rollup-plugin-postcss": "^1.6.2",
     "rollup-plugin-typescript2": "^0.17.2",
     "rollup-plugin-url": "^2.0.1",
-    "typescript": "^3.2.2"
+    "typescript": "^3.2.2",
+    "semantic-release": "^15.13.3"
   },
   "files": [
     "dist"
