@@ -2,29 +2,22 @@ import {request} from './react-request-hook';
 
 export type User = {
   id: number;
-  first_name: string;
-};
-
-type GetUsersResponse = {
-  page: number;
-  per_page: number;
-  total: number;
-  total_pages: number;
-  data: User[];
+  createdAt: string;
+  avatar: string;
+  name: string;
 };
 
 const api = {
   getUsers: (page: number = 1) => {
-    return request<GetUsersResponse>({
+    return request<User[]>({
       method: 'GET',
-      url: `/users?page=${page}`,
+      url: `/users?limit=10&page=${page}`,
     });
   },
 
   searchUser: (searchText: string) => {
-    return request({
+    return request<User[]>({
       method: 'GET',
-      baseURL: 'https://5c564f1ed293090014c0ee3e.mockapi.io/api/v1',
       url: `/users?filter=${searchText}&limit=10`,
     });
   },
