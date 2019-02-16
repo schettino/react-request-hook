@@ -1,40 +1,34 @@
-import React, {useState, useEffect, useCallback} from 'react';
-import {Box, InfiniteScroll, Text} from 'grommet';
+import React, {useState, useEffect} from 'react';
+import {Box, InfiniteScroll, Text, Image} from 'grommet';
 import {useResource} from '../react-request-hook';
 import api, {User} from '../api';
+import {Row} from '../styles';
 
 export const UserList: React.FC = () => {
+  const [page, setPage] = useState(1);
   const [usersList, setUsersList] = useState<User[]>([]);
-  const [users, getUsers] = useResource(api.getUsers, []);
+  const [response] = useResource(api.getUsers, [page]);
 
-  const onMore = useCallback(() => {
-    console.log('HERE');
-    if (users.data && users.data.page < users.data.total_pages) {
-      getUsers(users.data.page + 1);
+  function onMore() {
+    if (page < 10) {
+      setPage(p => p + 1);
     }
-  }, [users.data]);
+  }
 
   useEffect(() => {
-    if (users.data) {
-      const {data} = users.data;
-      setUsersList(prevItems => [...prevItems, ...data]);
+    if (response.data) {
+      setUsersList(prevItems => [...prevItems, ...response.data!]);
     }
-  }, [users.data]);
+  }, [response.data]);
 
   return (
-    <Box height="small" overflow="auto" pad="medium">
-      <InfiniteScroll step={2} items={usersList} onMore={onMore}>
-        {(user: User) => (
-          <Box
-            flex={false}
-            key={user.id}
-            pad="large"
-            background={`neutral-${(user.id % 4) + 1}`}
-            align="center">
-            <Text size="large" weight="bold" color="white">
-              {JSON.stringify(user)}
-            </Text>
-          </Box>
+    <Box flex overflow="auto" pad="medium">
+      <InfiniteScroll step={9} items={usersList} onMore={onMore}>
+        {(user: User, index: number) => (
+          <Row key={user.id} alpha={index + 1}>
+            <Image src={user.avatar} />
+            <Text size="large">{user.name}</Text>
+          </Row>
         )}
       </InfiniteScroll>
     </Box>
