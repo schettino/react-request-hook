@@ -1,44 +1,63 @@
-import React, {useEffect} from 'react';
-import axios from 'axios';
+import React, {useState, useEffect} from 'react';
+import axios, {
+  AxiosRequestConfig,
+  AxiosResponse,
+  AxiosError,
+  AxiosInstance,
+} from 'axios';
 import {RequestProvider} from './react-request-hook';
 import {useDispatch} from 'redux-react-hook';
 
-const axiosInstance = axios.create({
-  baseURL: 'https://reqres.in/api',
-  params: {},
-});
+const BASE_URL = 'https://5c564f1ed293090014c0ee3e.mockapi.io/api/v1';
 
 export const Sandbox: React.FC<{name: string}> = props => {
   const dispatch = useDispatch();
-  const log = (method: string, status: string) =>
+  const [count, setCount] = useState(0);
+  const [instance, setInstance] = useState<AxiosInstance | null>(null);
+
+  const log = (status: string) =>
     dispatch({
-      type: `@${props.name}/${method.toUpperCase()}/${status}`,
+      type: `@${props.name} [${status}]`,
     });
+
+  const onRequest = (config: AxiosRequestConfig) => {
+    setCount(n => n + 1);
+    log('START');
+    return config;
+  };
+
+  const onSuccess = (response: AxiosResponse) => {
+    log('SUCCESS');
+    return response;
+  };
+
+  const onError = (error: AxiosError) => {
+    if (axios.isCancel(error)) {
+      log('CANCEL');
+    } else {
+      log('ERROR');
+    }
+
+    return Promise.reject(error);
+  };
 
   useEffect(() => {
-    axiosInstance.interceptors.request.use(config => {
-      log(config.method!, 'START');
-      return config;
-    });
-
-    axiosInstance.interceptors.response.use(
-      response => {
-        log(response.config.method!, 'SUCCESS');
-        return response;
-      },
-      error => {
-        if (axios.isCancel(error)) {
-          log(error.request.method!, 'CANCEL');
-        } else {
-          log(error.request.method!, 'ERROR');
-        }
-
-        return Promise.reject(error);
-      },
-    );
+    const next = axios.create({baseURL: BASE_URL});
+    next.interceptors.request.use(onRequest);
+    next.interceptors.response.use(onSuccess, onError);
+    setInstance(() => next);
   }, []);
 
+  if (!instance) {
+    return null;
+  }
+
   return (
-    <RequestProvider value={axiosInstance}>{props.children}</RequestProvider>
+    <RequestProvider value={instance}>
+      <>
+        <span>REQUESTS: {count}</span>
+        {props.children}
+      </>
+    </RequestProvider>
   );
 };
