@@ -11,11 +11,13 @@ import SearchUser from './components/SearchUser';
 import {Styles, Main, Header, Container} from './styles';
 import {Menu} from 'grommet';
 import {UserListCached} from './components/UserListCached';
+import {SearchUserOptmized} from './components/SearchUserOptimized';
 
 const routes = [
   {label: 'Users List', path: '/users-list'},
-  {label: 'Users List Redux Cache', path: '/users-list-cached'},
+  {label: 'Users List Cached', path: '/users-list-cached'},
   {label: 'Search User', path: '/search-user'},
+  {label: 'Search User Optmized', path: '/search-user-optmized'},
 ];
 
 function App(props: RouteComponentProps) {
@@ -58,6 +60,15 @@ function App(props: RouteComponentProps) {
             render={() => (
               <Sandbox name="search-user">
                 <SearchUser />
+              </Sandbox>
+            )}
+          />
+
+          <Route
+            path="/search-user-optmized"
+            render={() => (
+              <Sandbox name="search-user-optmized">
+                <SearchUserOptmized />
               </Sandbox>
             )}
           />
