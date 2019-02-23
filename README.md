@@ -247,7 +247,7 @@ And you'll have
 
 ## Example
 
-You can try out redux-react-hook right in your browser with the [Codesandbox example][codesandbox].
+You can try out react-request-hook right in your browser with the [Codesandbox example][codesandbox].
 
 The example folder contains a `/components` folder with different use cases, like infinite scrolling components, search input that triggers the API, and so on. It's currently a work in progress.
 
