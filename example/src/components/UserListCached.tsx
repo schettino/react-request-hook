@@ -1,12 +1,13 @@
 import React, {useEffect, useCallback} from 'react';
 import {Box, InfiniteScroll, Text, Image} from 'grommet';
-import {useResource} from '../react-request-hook';
+import {useResource} from 'react-request-hook';
 import api, {User} from '../api';
 import {Row} from '../styles';
 import {useMappedState, useDispatch} from 'redux-react-hook';
 import {State} from '../store';
 
 export const UserListCached: React.FC = () => {
+  const dispatch = useDispatch();
   const mapStateToProps = useCallback(
     (state: State) => ({
       usersList: state.usersListCached.data,
@@ -17,7 +18,6 @@ export const UserListCached: React.FC = () => {
 
   const [response, getUsers] = useResource(api.getUsers);
   const {page, usersList} = useMappedState(mapStateToProps);
-  const dispatch = useDispatch();
 
   function onMore() {
     if (page < 10) {
@@ -29,7 +29,7 @@ export const UserListCached: React.FC = () => {
     if (page === 0) {
       getUsers(1);
     }
-  }, [])
+  }, []);
 
   useEffect(() => {
     if (response.data) {
