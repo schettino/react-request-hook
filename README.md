@@ -12,6 +12,8 @@
 [![PRs Welcome][prs-badge]][prs]
 [![MIT License][license-badge]][license]
 
+[Codesandbox][codesandbox]
+
 <!-- prettier-ignore-end -->
 
 ## Table of Contents
@@ -56,7 +58,7 @@ ReactDOM.render(
 ```jsx
 // User Profile component
 function UserProfile(props) {
-  const [profile, getProfile] = useResource(id => {
+  const [profile, getProfile] = useResource(id => ({
     url: `/user/${id}`,
     method: 'GET'
   })
@@ -243,9 +245,11 @@ And you'll have
   <img width="600" src="https://raw.githubusercontent.com/schettino/react-request-hook/master/other/type-hint.png">
 </p>
 
-## Examples
+## Example
 
-The examples folder contains a `/components` folder with different use cases, like infinite scrolling components, search input that triggers the API, and so on. It's currently a work in progress.
+You can try out redux-react-hook right in your browser with the [Codesandbox example][codesandbox].
+
+The example folder contains a `/components` folder with different use cases, like infinite scrolling components, search input that triggers the API, and so on. It's currently a work in progress.
 
 ## Acknowledgement
 
@@ -271,5 +275,6 @@ MIT
 [prs]: http://makeapullrequest.com
 [bundle-size]: https://bundlephobia.com/result?p=react-request-hook@latest
 [bundle-size-badge]: https://badgen.net/bundlephobia/minzip/react-request-hook@latest
+[codesandbox]: https://codesandbox.io/s/github/schettino/react-request-hook/tree/master/example
 
 <!-- prettier-ignore-end -->
