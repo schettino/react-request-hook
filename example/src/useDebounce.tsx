@@ -2,7 +2,7 @@ import {useState, useEffect, useRef} from 'react';
 
 export default function useDebounce(value: string, delay: number = 600) {
   const [currentValue, setCurrentValue] = useState(value);
-  const interval = useRef<NodeJS.Timeout | null>(null);
+  const interval = useRef<number | null>(null);
 
   const clean = () => {
     if (interval.current !== null) {
