@@ -13,11 +13,11 @@ export const Main = styled.main`
   width: 100%;
   margin: 6rem;
   padding: 1rem;
+  overflow: hidden;
   flex-grow: 1;
   flex-direction: column;
   background-color: white;
   border-radius: 6px;
-  overflow: hidden;
   box-shadow: 0 16px 38px -12px rgba(0, 0, 0, 0.56),
     0 4px 25px 0px rgba(0, 0, 0, 0.12), 0 8px 10px -5px rgba(0, 0, 0, 0.2);
 
@@ -27,19 +27,61 @@ export const Main = styled.main`
   }
 `;
 
+export const FlexRow = styled.div<{justify?: string}>`
+  display: flex;
+  flex-direction: row;
+  ${props => props.justify && `justify-content: ${props.justify}`}
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+  }
+`;
+
 export const Container = styled.div`
   display: flex;
   flex-direction: column;
   flex-grow: 1;
-  overflow-y: auto;
+  padding: 4px;
+  max-height: calc(100% - 80px);
+  overflow-y: scroll;
 `;
 
-export const Row = styled.div<{alpha?: number}>`
+export const Counter = styled(FlexRow)<{color?: 'purple' | 'blue' | 'green'}>`
+  display: flex;
+  flex-direction: row;
+  align-self: center;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 10px;
+  font-weight: 500;
+  font-size: 18px;
+  margin: 8px;
+
+  min-width: 188px;
+  border: 3px solid
+    ${props =>
+      props.color === 'purple'
+        ? 'purple'
+        : props.color === 'green'
+        ? 'green'
+        : 'blueviolet'};
+
+  @media (max-width: 768px) {
+    display: none;
+  }
+
+  b {
+    font-weight: 600;
+    padding: 0 8px;
+    font-size: 22px;
+  }
+`;
+
+export const Row = styled(FlexRow)<{alpha?: number}>`
   min-height: 128px;
   margin: 8px;
   padding: 16px;
-  display: flex;
-  flex-direction: row;
   align-items: center;
   border-radius: 4px;
   background-color: rgba(

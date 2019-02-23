@@ -5,14 +5,17 @@ import axios, {
   AxiosError,
   AxiosInstance,
 } from 'axios';
-import {RequestProvider} from './react-request-hook';
+import {RequestProvider} from 'react-request-hook';
 import {useDispatch} from 'redux-react-hook';
+import {Counter, FlexRow} from './styles';
 
 const BASE_URL = 'https://5c564f1ed293090014c0ee3e.mockapi.io/api/v1';
 
 export const Sandbox: React.FC<{name: string}> = props => {
   const dispatch = useDispatch();
-  const [count, setCount] = useState(0);
+  const [requests, setRequests] = useState(0);
+  const [responses, setResponses] = useState(0);
+  const [cancelations, setCancelations] = useState(0);
   const [instance, setInstance] = useState<AxiosInstance | null>(null);
 
   const log = (status: string) =>
@@ -21,18 +24,20 @@ export const Sandbox: React.FC<{name: string}> = props => {
     });
 
   const onRequest = (config: AxiosRequestConfig) => {
-    setCount(n => n + 1);
+    setRequests(n => n + 1);
     log('START');
     return config;
   };
 
   const onSuccess = (response: AxiosResponse) => {
     log('SUCCESS');
+    setResponses(n => n + 1);
     return response;
   };
 
   const onError = (error: AxiosError) => {
     if (axios.isCancel(error)) {
+      setCancelations(n => n + 1);
       log('CANCEL');
     } else {
       log('ERROR');
@@ -55,7 +60,19 @@ export const Sandbox: React.FC<{name: string}> = props => {
   return (
     <RequestProvider value={instance}>
       <>
-        <span>REQUESTS: {count}</span>
+        <FlexRow justify="space-between">
+          <FlexRow>
+            <Counter color="purple">
+              REQUESTS: <b>{requests}</b>
+            </Counter>
+            <Counter color="blue">
+              SUCCESS: <b>{responses}</b>
+            </Counter>
+          </FlexRow>
+          <Counter color="green">
+            CANCELATIONS: <b>{cancelations}</b>
+          </Counter>
+        </FlexRow>
         {props.children}
       </>
     </RequestProvider>
