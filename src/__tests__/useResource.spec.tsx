@@ -1,15 +1,17 @@
 import * as React from 'react';
-import * as ReactDOM from 'react-dom';
+import {wait, act, render, cleanup} from 'react-testing-library';
 import {RequestProvider} from '../requestContext';
 import {useResource, UseResourceResult} from '../useResource';
-import {wait, flushEffects} from 'react-testing-library';
 import {adapter} from '../../test-utils';
 import {Request, request} from '../request';
 
 describe('useResource', () => {
-  let reactRoot: HTMLDivElement;
   const axios = adapter.axiosInstance;
   const onRequestCancel = jest.fn();
+
+  const Provider: React.FC = ({children}) => (
+    <RequestProvider value={axios}>{children}</RequestProvider>
+  );
 
   axios.interceptors.response.use(
     config => config,
@@ -25,97 +27,84 @@ describe('useResource', () => {
     axios.mockClear();
     onRequestCancel.mockClear();
     adapter.reset();
-    reactRoot = document.createElement('div');
-    document.body.appendChild(reactRoot);
   });
 
-  afterEach(() => {
-    document.body.removeChild(reactRoot);
-  });
-
-  function render(element: React.ReactElement<any>) {
-    ReactDOM.render(
-      <RequestProvider value={axios}>{element}</RequestProvider>,
-      reactRoot,
-    );
-  }
+  afterEach(cleanup);
 
   function setup(
-    fn: Request = () =>
-      request({
-        url: '/users',
-        method: 'GET',
-      }),
+    fn: Request = () => request({url: '/users', method: 'GET'}),
     dependencies?: any[],
   ) {
-    const values = {users: {}} as {
+    const hook = {users: {}} as {
       users: UseResourceResult<any>[0];
       getUsers: UseResourceResult<any>[1];
     };
 
     const Component = () => {
       const [users, getUsers] = useResource(fn, dependencies);
-      Object.assign(values.users, users);
-      values.getUsers = getUsers;
+      hook.users = users;
+      hook.getUsers = getUsers;
       return null;
     };
 
-    render(<Component />);
-    flushEffects();
-    return values;
+    const rendered = render(
+      <Provider>
+        <Component />
+      </Provider>,
+    );
+
+    return {hook, ...rendered};
   }
 
   it('should make the request when the default params have been passed', async () => {
     adapter.onGet('/users/userId').reply(200, {id: '1', name: 'luke'});
 
-    const values = setup(
-      (id: string) => ({
-        url: `/users/${id}`,
-        method: 'GET',
-      }),
+    const {hook} = setup(
+      (id: string) => ({url: `/users/${id}`, method: 'GET'}),
       ['userId'],
     );
 
-    await wait(() =>
-      expect(values.users.data).toEqual({id: '1', name: 'luke'}),
-    );
-    expect(values.users.isLoading).toEqual(false);
-    expect(values.users.error).toEqual(null);
-    expect(values.users.cancel).toEqual(expect.any(Function));
+    await wait(() => expect(hook.users.data).toEqual({id: '1', name: 'luke'}));
+    expect(hook.users.isLoading).toEqual(false);
+    expect(hook.users.error).toEqual(null);
+    expect(hook.users.cancel).toEqual(expect.any(Function));
   });
 
   it('should cancel a pending request on unmount', async () => {
     adapter.onGet('/users').reply(200, []);
-    setup().getUsers();
-    ReactDOM.unmountComponentAtNode(reactRoot);
+
+    const {hook, unmount} = setup();
+    act(() => hook.getUsers());
+    unmount();
+
     await wait(() => expect(onRequestCancel).toHaveBeenCalledTimes(1));
   });
 
   it('should cancel last pending request when changing default params', async () => {
     adapter.onGet('/users/1').reply(200, {id: '1', name: 'luke'});
     adapter.onGet('/users/2').reply(200, {id: '2', name: 'vader'});
+
     const onSuccess = jest.fn();
+
     const Component: React.FC = () => {
       const [userId, setUserId] = React.useState('1');
       const [users] = useResource(
-        (id: string) => ({
-          method: 'GET',
-          url: `/users/${id}`,
-        }),
+        (id: string) => ({method: 'GET', url: `/users/${id}`}),
         [userId],
       );
       React.useEffect(() => {
-        if (userId === '1' && users.isLoading) {
-          setUserId('2');
-        }
-        if (users.data) {
-          onSuccess(users.data);
-        }
+        if (userId === '1') setUserId('2');
+        if (users.data) onSuccess(users.data);
       }, [users, userId]);
       return null;
     };
 
-    render(<Component />);
+    render(
+      <Provider>
+        <Component />
+      </Provider>,
+    );
+
     await wait(() => expect(onSuccess).toHaveBeenCalledTimes(1));
     expect(onSuccess).toHaveBeenCalledTimes(1);
     expect(onSuccess).toHaveBeenCalledWith({id: '2', name: 'vader'});
@@ -125,40 +114,50 @@ describe('useResource', () => {
   it('should allow only one request at time', async () => {
     adapter.onGet('/users').reply(200, []);
 
-    const values = setup();
+    const {hook} = setup();
 
-    values.getUsers();
-    setTimeout(values.getUsers);
+    act(() => {
+      hook.getUsers();
+    });
+    act(() => {
+      hook.getUsers();
+    });
 
-    await wait(() => expect(values.users.data).toEqual([]));
-    expect(values.users.error).toEqual(null);
-    expect(values.users.isLoading).toEqual(false);
+    await wait(() => expect(hook.users.data).toEqual([]));
+    expect(hook.users.error).toEqual(null);
+    expect(hook.users.isLoading).toEqual(false);
     expect(onRequestCancel).toHaveBeenCalledTimes(1);
   });
 
   it('should allow to cancel programmatically a request', async () => {
     adapter.onGet('/users').reply(200, []);
 
-    const values = setup();
+    const {hook} = setup();
 
-    values.getUsers();
-    setTimeout(values.users.cancel);
+    act(() => {
+      hook.getUsers();
+    });
+    act(() => {
+      hook.users.cancel();
+    });
 
     await wait(() => expect(onRequestCancel).toHaveBeenCalledTimes(1));
-    expect(values.users.data).toEqual(null);
-    expect(values.users.error).toEqual(null);
-    expect(values.users.isLoading).toEqual(false);
+    expect(hook.users.data).toEqual(null);
+    expect(hook.users.error).toEqual(null);
+    expect(hook.users.isLoading).toEqual(false);
   });
 
   it('should return a error properly when it occurs', async () => {
     adapter.onGet('/users').reply(500, {message: 'Internal Error'});
 
-    const values = setup();
+    const {hook} = setup();
 
-    values.getUsers();
+    act(() => {
+      hook.getUsers();
+    });
 
     await wait(() =>
-      expect(values.users.error).toEqual({
+      expect(hook.users.error).toEqual({
         code: 500,
         data: {message: 'Internal Error'},
         isCancel: false,
@@ -166,8 +165,8 @@ describe('useResource', () => {
       }),
     );
 
-    expect(values.users.cancel).toEqual(expect.any(Function));
-    expect(values.users.data).toEqual(null);
-    expect(values.users.isLoading).toEqual(false);
+    expect(hook.users.cancel).toEqual(expect.any(Function));
+    expect(hook.users.data).toEqual(null);
+    expect(hook.users.isLoading).toEqual(false);
   });
 });

@@ -1,13 +1,11 @@
 import * as React from 'react';
-import * as ReactDOM from 'react-dom';
-import {wait, flushEffects} from 'react-testing-library';
+import {wait, act, cleanup, render} from 'react-testing-library';
 import {RequestProvider, RequestContext} from '../requestContext';
 import {useRequest, UseRequestResult} from '../useRequest';
 import {adapter} from '../../test-utils';
 import {Request} from '../request';
 
 describe('useRequest', () => {
-  let reactRoot: HTMLDivElement;
   const axios = adapter.axiosInstance;
   const onCancel = jest.fn();
 
@@ -25,50 +23,43 @@ describe('useRequest', () => {
     axios.mockClear();
     onCancel.mockClear();
     adapter.reset();
-    reactRoot = document.createElement('div');
-    document.body.appendChild(reactRoot);
   });
 
-  afterEach(() => {
-    document.body.removeChild(reactRoot);
-  });
+  afterEach(cleanup);
 
-  function render(element: React.ReactElement<any>) {
-    ReactDOM.render(
-      <RequestProvider value={axios}>{element}</RequestProvider>,
-      reactRoot,
-    );
-  }
-
-  function setup(
-    fn: Request = () => ({
-      url: '/users',
-      method: 'GET',
-    }),
-  ) {
-    const values = {response: {}} as {
+  function setup(fn?: Request | null) {
+    const hook = {response: {}} as {
       response: UseRequestResult<any>[0];
       request: UseRequestResult<any>[1];
     };
 
+    const defaultRequest = fn ? fn : () => ({url: '/users', method: 'GET'});
+
     const Component = () => {
-      const [response, request] = useRequest(fn);
-      Object.assign(values.response, response);
-      values.request = request;
+      const [response, request] = useRequest(defaultRequest);
+      hook.response = response;
+      hook.request = request;
       return null;
     };
 
-    render(<Component />);
-    flushEffects();
-    return values;
+    const rendered = render(
+      <RequestProvider value={axios}>
+        <Component />
+      </RequestProvider>,
+    );
+
+    return {hook, ...rendered};
   }
 
-  it('should call the axios instance when it is ready to make the request', () => {
+  it('should call the axios instance when it is ready to make the request', async () => {
     adapter.onGet('/users').reply(200, []);
     const source = jest.spyOn(axios.CancelToken, 'source');
-    const values = setup();
+    const {hook} = setup();
 
-    values.request().ready();
+    let p;
+    act(() => {
+      p = hook.request().ready();
+    });
 
     expect(source).toHaveBeenCalledTimes(1);
     expect(axios).toHaveBeenCalledTimes(1);
@@ -77,48 +68,55 @@ describe('useRequest', () => {
       url: '/users',
       method: 'GET',
     });
+    await expect(p).resolves.toEqual([]);
+    source.mockRestore();
   });
 
   it('should update hasPending properly', async () => {
     adapter.onGet('/users').reply(200, []);
-    const values = setup();
 
-    const {ready} = values.request();
-    ready();
-    ready();
-
-    let count = 0;
-    axios.interceptors.request.use(config => {
-      count++;
-      return config;
+    const {hook} = setup();
+    act(() => {
+      hook.request().ready();
+      hook.request().ready();
     });
 
-    expect(values.response.hasPending).toBe(true);
+    expect(hook.response.hasPending).toBe(true);
     await wait(() => {
-      if (count === 1) {
-        expect(values.response.hasPending).toBe(true);
+      if (adapter.history.get.length === 1) {
+        expect(hook.response.hasPending).toBe(true);
       }
-      if (count === 2) {
-        expect(values.response.hasPending).toBe(false);
+      if (adapter.history.get.length === 2) {
+        expect(hook.response.hasPending).toBe(false);
       }
+
+      return expect(adapter.history.get.length).toEqual(2);
     });
   });
 
   it('should resolve with the response data', async () => {
-    adapter.onGet('/users').reply(200, [{id: 1, name: 'luke skywalker'}]);
-    const values = setup();
-    const p = values.request().ready();
-    await expect(p).resolves.toEqual([{id: 1, name: 'luke skywalker'}]);
+    adapter.onGet('/users').reply(200, [{id: '1', name: 'luke skywalker'}]);
+    const {hook} = setup();
+
+    let p;
+    act(() => {
+      p = hook.request().ready();
+    });
+
+    await expect(p).resolves.toEqual([{id: '1', name: 'luke skywalker'}]);
   });
 
   it('should reject with a normalized error data', async () => {
     adapter.onGet('/user/1').reply(404, {message: 'User not found'});
-    const values = setup((id: string) => ({
+    const {hook} = setup((id: string) => ({
       url: `/user/${id}`,
       method: 'get',
     }));
 
-    const p = values.request('1').ready();
+    let p;
+    act(() => {
+      p = hook.request('1').ready();
+    });
 
     await expect(p).rejects.toEqual({
       code: 404,
@@ -131,13 +129,18 @@ describe('useRequest', () => {
   it('should cancel all pending requests when `clear` is called', async () => {
     adapter.onGet('/users').reply(200, []);
 
-    const values = setup();
-    const {ready} = values.request();
-    const p1 = ready();
-    const p2 = ready();
-    const p3 = ready();
+    let p1, p2, p3;
+    const {hook} = setup();
+    act(() => {
+      const {ready} = hook.request();
+      p1 = ready();
+      p2 = ready();
+      p3 = ready();
+    });
 
-    values.response.clear('clear');
+    act(() => {
+      hook.response.clear('clear');
+    });
 
     const error = {
       code: undefined,
@@ -151,17 +154,18 @@ describe('useRequest', () => {
     await expect(p3).rejects.toEqual(error);
   });
 
-  it('should only cancel the current request when calling a canceler', async () => {
+  it('should cancel the current request when calling a canceler', async () => {
     adapter.onGet('/users').reply(200, []);
+    const {hook} = setup(null);
 
-    const values = setup();
-    const r1 = values.request();
-    const r2 = values.request();
-
-    const p1 = r1.ready();
-    const p2 = r2.ready();
-
-    r1.cancel('cancel');
+    let p1, p2;
+    act(() => {
+      const r1 = hook.request();
+      const r2 = hook.request();
+      p1 = r1.ready();
+      p2 = r2.ready();
+      r1.cancel('cancel');
+    });
 
     await expect(p1).rejects.toEqual({
       code: undefined,
@@ -169,18 +173,25 @@ describe('useRequest', () => {
       isCancel: true,
       message: 'cancel',
     });
+
     await expect(p2).resolves.toEqual([]);
   });
 
   it('should cancel all requests created from the same factory when calling the canceler', async () => {
     adapter.onGet('/users').reply(200, []);
 
-    const values = setup();
-    const r1 = values.request();
-    const p1 = r1.ready();
-    const p2 = r1.ready();
+    const {hook, unmount} = setup();
+    const r1 = hook.request();
 
-    r1.cancel('cancel');
+    let p1, p2;
+    act(() => {
+      p1 = r1.ready();
+    });
+
+    act(() => {
+      p2 = r1.ready();
+      r1.cancel('cancel');
+    });
 
     const error = {
       code: undefined,
@@ -188,20 +199,28 @@ describe('useRequest', () => {
       isCancel: true,
       message: 'cancel',
     };
-    
+
+    unmount();
+
     await expect(p1).rejects.toEqual(error);
     await expect(p2).rejects.toEqual(error);
   });
 
   it('should cancel pending requests on unmount', async () => {
-    const values = setup();
-    const p = values.request().ready();
-    ReactDOM.unmountComponentAtNode(reactRoot);
+    const {hook, unmount} = setup();
+
+    let p;
+    act(() => {
+      p = hook.request().ready();
+    });
+
+    unmount();
+
     await expect(p).rejects.toEqual({
-      code: undefined,
-      data: null,
       isCancel: true,
       message: undefined,
+      code: undefined,
+      data: null,
     });
   });
 
@@ -256,7 +275,6 @@ describe('useRequest', () => {
         <Component />
       </Provider>,
     );
-    flushEffects();
 
     await wait(() => {
       expect(usedInstances).toBe(2);
