@@ -229,11 +229,11 @@ const api = {
     return {
       url: '/users',
       method: 'GET',
-      payload: {
+      payload: [{
         id: String(),
         age: Number(),
         likesVideoGame: Boolean(),
-      },
+      }],
     });
   },
 };
