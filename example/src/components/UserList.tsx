@@ -7,7 +7,7 @@ import {Row} from '../styles';
 export const UserList: React.FC = () => {
   const [page, setPage] = useState(1);
   const [usersList, setUsersList] = useState<User[]>([]);
-  const [response, getUsers] = useResource(api.getUsers);
+  const [users, getUsers] = useResource(api.getUsers);
 
   const onMore = () => {
     const nextPage = page + 1;
@@ -19,10 +19,10 @@ export const UserList: React.FC = () => {
   }, [page]);
 
   useEffect(() => {
-    if (response.data) {
-      setUsersList(prevItems => [...prevItems, ...response.data!]);
+    if (users.data) {
+      setUsersList(prevItems => [...prevItems, ...users.data!]);
     }
-  }, [response.data]);
+  }, [users.data]);
 
   return (
     <Box flex overflow="auto" pad="medium">
