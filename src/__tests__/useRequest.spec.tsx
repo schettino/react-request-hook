@@ -309,4 +309,15 @@ describe('useRequest', () => {
       expect(countInstance2).toBe(2);
     });
   });
+
+  it('throws if provider is missing', () => {
+    const Component = () => {
+      expect(() => {
+        useRequest(() => ({url: ''}));
+      }).toThrow();
+      return null;
+    };
+
+    render(<Component />);
+  });
 });
