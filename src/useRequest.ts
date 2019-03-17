@@ -36,9 +36,14 @@ export function useRequest<TRequest extends Request>(
     }
   };
 
+  const callFn = useRef(fn);
+  useEffect(() => {
+    callFn.current = fn;
+  }, [fn]);
+
   const request = useCallback(
     (...args: Arguments<TRequest> | any[]) => {
-      const config = fn(...args);
+      const config = callFn.current(...args);
       const source = axios.CancelToken.source();
 
       const ready = () => {
@@ -89,7 +94,7 @@ export function useRequest<TRequest extends Request>(
 
   return [
     {
-      clear: (message?: string) => clearRef.current(message),
+      clear,
       hasPending: sources.length > 0,
     },
     request,
