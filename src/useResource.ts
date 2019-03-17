@@ -19,6 +19,9 @@ export type UseResourceResult<TRequest extends Request> = [
   RequestDispatcher<TRequest>
 ];
 
+const REQUEST_CLEAR_MESSAGE =
+  'A new request has been made before completing the last one';
+
 export function useResource<TRequest extends Request>(
   fn: TRequest,
   defaultParams?: Arguments<TRequest>,
@@ -27,20 +30,23 @@ export function useResource<TRequest extends Request>(
   const [error, setError] = useState<RequestError | null>(null);
   const [data, setData] = useState<Payload<TRequest> | null>(null);
 
-  const request = useCallback((...args: Arguments<TRequest> | any[]) => {
-    clear('A new request has been made before completing the last one');
-    const {ready, cancel} = createRequest(...(args as Arguments<TRequest>));
-    ready()
-      .then(data => {
-        setData(data);
-      })
-      .catch((error: RequestError) => {
-        if (!error.isCancel) {
-          setError(error);
-        }
-      });
-    return cancel;
-  }, []);
+  const request = useCallback(
+    (...args: Arguments<TRequest> | any[]) => {
+      clear(REQUEST_CLEAR_MESSAGE);
+      const {ready, cancel} = createRequest(...(args as Arguments<TRequest>));
+      ready()
+        .then(data => {
+          setData(data);
+        })
+        .catch((error: RequestError) => {
+          if (!error.isCancel) {
+            setError(error);
+          }
+        });
+      return cancel;
+    },
+    [clear, createRequest],
+  );
 
   useEffect(() => {
     let canceller: Canceler;
