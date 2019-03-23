@@ -107,7 +107,7 @@ export function useRequest<TRequest extends Request>(
 
   return [
     {
-      clear,
+      clear: (message?: string) => clearRef.current(message),
       hasPending: sources.length > 0,
     },
     request,
