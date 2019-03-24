@@ -21,7 +21,9 @@
     "deploy": "gh-pages -d example/build",
     "prepare": "yarn run build"
   },
-  "dependencies": {},
+  "dependencies": {
+    "fast-deep-equal": "^2.0.1"
+  },
   "peerDependencies": {
     "axios": "^0.18.0",
     "react": "^16.7.0-alpha.2",

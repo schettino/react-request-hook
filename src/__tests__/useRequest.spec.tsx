@@ -224,6 +224,33 @@ describe('useRequest', () => {
     });
   });
 
+  it('uses the last returned axios config', async () => {
+    const Component = () => {
+      const [endpoint, setEndpoint] = React.useState('endpoint-1');
+      React.useEffect(() => setEndpoint('endpoint-2'), []);
+      const [, request] = useRequest(() => ({
+        url: `/${endpoint}`,
+        method: 'get',
+      }));
+
+      React.useEffect(() => {
+        request().ready();
+      }, [endpoint, request]);
+
+      return null;
+    };
+
+    render(
+      <RequestProvider value={axios}>
+        <Component />
+      </RequestProvider>,
+    );
+
+    await wait(() => expect(adapter.history.get.length).toEqual(2));
+    expect(adapter.history.get[0].url).toEqual('/endpoint-1');
+    expect(adapter.history.get[1].url).toEqual('/endpoint-2');
+  });
+
   it('should use the lastest axios instance', async () => {
     const instance1 = adapter.axiosInstance.create({
       baseURL: 'https://instance1',
@@ -251,7 +278,7 @@ describe('useRequest', () => {
         usedInstances++;
         request().ready();
         request().ready();
-      }, [current]);
+      }, [current, request]);
 
       return null;
     };
@@ -281,5 +308,16 @@ describe('useRequest', () => {
       expect(countInstance1).toBe(2);
       expect(countInstance2).toBe(2);
     });
+  });
+
+  it('throws if provider is missing', () => {
+    const Component = () => {
+      expect(() => {
+        useRequest(() => ({url: ''}));
+      }).toThrow();
+      return null;
+    };
+
+    render(<Component />);
   });
 });

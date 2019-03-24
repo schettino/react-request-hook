@@ -21,10 +21,23 @@ export type UseRequestResult<TRequest extends Request> = [
   RequestFactory<TRequest>
 ];
 
+class MissingProviderError extends Error {
+  constructor() {
+    super(
+      'react-request-hook requires an Axios instance to be passed through ' +
+        'context via the <RequestProvider>',
+    );
+  }
+}
+
 export function useRequest<TRequest extends Request>(
   fn: TRequest,
 ): UseRequestResult<TRequest> {
   const axiosInstance = useContext(RequestContext);
+  if (!axiosInstance) {
+    throw new MissingProviderError();
+  }
+
   const [sources, setSources] = useState<CancelTokenSource[]>([]);
   const mountedRef = useRef(true);
 
@@ -36,9 +49,14 @@ export function useRequest<TRequest extends Request>(
     }
   };
 
+  const callFn = useRef(fn);
+  useEffect(() => {
+    callFn.current = fn;
+  }, [fn]);
+
   const request = useCallback(
     (...args: Arguments<TRequest> | any[]) => {
-      const config = fn(...args);
+      const config = callFn.current(...args);
       const source = axios.CancelToken.source();
 
       const ready = () => {
