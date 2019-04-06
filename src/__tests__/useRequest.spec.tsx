@@ -5,6 +5,27 @@ import {useRequest, UseRequestResult} from '../useRequest';
 import {adapter} from '../../test-utils';
 import {Request} from '../request';
 
+class Deferred {
+  resolve: (...args: unknown[]) => void;
+  reject: (...args: unknown[]) => void;
+  promise: Promise<any>;
+  constructor(resolveValue?: any) {
+    this.resolve = () => {
+      throw new Error('promise not initialized');
+    };
+    this.reject = () => {
+      throw new Error('promise not initialized');
+    };
+
+    this.promise = new Promise(
+      function(this: any, resolve: any, reject: any) {
+        this.resolve = resolveValue ? () => resolve(resolveValue) : resolve;
+        this.reject = reject;
+      }.bind(this),
+    );
+  }
+}
+
 describe('useRequest', () => {
   const axios = adapter.axiosInstance;
   const onCancel = jest.fn();
@@ -25,7 +46,9 @@ describe('useRequest', () => {
     adapter.reset();
   });
 
-  afterEach(cleanup);
+  afterEach(() => {
+    cleanup();
+  });
 
   function setup(fn?: Request | null) {
     const hook = {response: {}} as {
@@ -56,9 +79,9 @@ describe('useRequest', () => {
     const source = jest.spyOn(axios.CancelToken, 'source');
     const {hook} = setup();
 
-    let p;
-    act(() => {
-      p = hook.request().ready();
+    let result;
+    await act(async () => {
+      result = await hook.request().ready();
     });
 
     expect(source).toHaveBeenCalledTimes(1);
@@ -68,57 +91,74 @@ describe('useRequest', () => {
       url: '/users',
       method: 'GET',
     });
-    await expect(p).resolves.toEqual([]);
+    expect(result).toEqual([]);
     source.mockRestore();
   });
 
   it('should update hasPending properly', async () => {
     adapter.onGet('/users').reply(200, []);
+    let promises: Deferred[] = [];
+
+    adapter.axiosInstance.interceptors.request.use(config => {
+      const p = new Deferred(config);
+      promises.push(p);
+      return p.promise;
+    });
 
     const {hook} = setup();
-    act(() => {
+
+    expect(hook.response.hasPending).toBe(false);
+    await act(async () => {
       hook.request().ready();
       hook.request().ready();
     });
 
-    expect(hook.response.hasPending).toBe(true);
-    await wait(() => {
-      if (adapter.history.get.length === 1) {
-        expect(hook.response.hasPending).toBe(true);
-      }
-      if (adapter.history.get.length === 2) {
+    await act(async () => {
+      const [p1, p2] = promises;
+      expect(hook.response.hasPending).toBe(true);
+
+      p1.resolve();
+      expect(hook.response.hasPending).toBe(true);
+
+      p2.resolve();
+      await wait(() => {
         expect(hook.response.hasPending).toBe(false);
-      }
-
-      return expect(adapter.history.get.length).toEqual(2);
+      });
     });
+
+    axios.interceptors.request.eject(0);
   });
 
   it('should resolve with the response data', async () => {
     adapter.onGet('/users').reply(200, [{id: '1', name: 'luke skywalker'}]);
     const {hook} = setup();
 
-    let p;
-    act(() => {
-      p = hook.request().ready();
+    let result;
+    await act(async () => {
+      result = await hook.request().ready();
     });
 
-    await expect(p).resolves.toEqual([{id: '1', name: 'luke skywalker'}]);
+    expect(result).toEqual([{id: '1', name: 'luke skywalker'}]);
   });
 
   it('should reject with a normalized error data', async () => {
     adapter.onGet('/user/1').reply(404, {message: 'User not found'});
+
     const {hook} = setup((id: string) => ({
       url: `/user/${id}`,
       method: 'get',
     }));
 
-    let p;
-    act(() => {
-      p = hook.request('1').ready();
+    let error;
+    await act(async () => {
+      try {
+        await hook.request('1').ready();
+      } catch (e) {
+        error = e;
+      }
     });
 
-    await expect(p).rejects.toEqual({
+    expect(error).toEqual({
       code: 404,
       data: {message: 'User not found'},
       isCancel: false,
@@ -129,69 +169,63 @@ describe('useRequest', () => {
   it('should cancel all pending requests when `clear` is called', async () => {
     adapter.onGet('/users').reply(200, []);
 
-    let p1, p2, p3;
-    const {hook} = setup();
-    act(() => {
-      const {ready} = hook.request();
-      p1 = ready();
-      p2 = ready();
-      p3 = ready();
-    });
+    let promises: Deferred[] = [];
 
-    act(() => {
-      hook.response.clear('clear');
+    axios.interceptors.request.use(config => {
+      const p = new Deferred(config);
+      promises.push(p);
+      return p.promise;
     });
 
     const error = {
       code: undefined,
       data: null,
       isCancel: true,
-      message: 'clear',
+      message: 'cancel message',
     };
 
-    await expect(p1).rejects.toEqual(error);
-    await expect(p2).rejects.toEqual(error);
-    await expect(p3).rejects.toEqual(error);
-  });
+    const {hook} = setup();
+    const {ready, cancel} = hook.request();
 
-  it('should cancel the current request when calling a canceler', async () => {
-    adapter.onGet('/users').reply(200, []);
-    const {hook} = setup(null);
-
-    let p1, p2;
-    act(() => {
-      const r1 = hook.request();
-      const r2 = hook.request();
-      p1 = r1.ready();
-      p2 = r2.ready();
-      r1.cancel('cancel');
+    const onError = jest.fn();
+    const onSuccess = jest.fn();
+    await act(async () => {
+      ready()
+        .then(() => onSuccess('Promise 1'))
+        .catch(onError);
+      ready()
+        .then(() => onSuccess('Promise 2'))
+        .catch(onError);
+      ready()
+        .then(() => onSuccess('Promise 3'))
+        .catch(onError);
     });
 
-    await expect(p1).rejects.toEqual({
-      code: undefined,
-      data: null,
-      isCancel: true,
-      message: 'cancel',
+    const [p1, p2, p3] = promises;
+
+    await act(async () => {
+      p1.resolve();
+      await wait(() => {
+        expect(onSuccess).toHaveBeenCalledTimes(1);
+        expect(onSuccess).toHaveBeenCalledWith('Promise 1');
+      });
     });
 
-    await expect(p2).resolves.toEqual([]);
+    act(() => cancel('cancel message'));
+
+    await act(async () => {
+      p2.resolve();
+      p3.resolve();
+      await wait(() => expect(onError).toHaveBeenCalledTimes(2));
+    });
+
+    expect(onError).toHaveBeenCalledWith(error);
+    axios.interceptors.request.eject(1);
   });
 
   it('should cancel all requests created from the same factory when calling the canceler', async () => {
     adapter.onGet('/users').reply(200, []);
-
-    const {hook, unmount} = setup();
-    const r1 = hook.request();
-
-    let p1, p2;
-    act(() => {
-      p1 = r1.ready();
-    });
-
-    act(() => {
-      p2 = r1.ready();
-      r1.cancel('cancel');
-    });
+    const {hook} = setup();
 
     const error = {
       code: undefined,
@@ -200,10 +234,20 @@ describe('useRequest', () => {
       message: 'cancel',
     };
 
-    unmount();
+    await act(async () => {
+      let p1, p2, p3;
+      const r1 = hook.request();
+      const r2 = hook.request();
+      p1 = r1.ready();
+      p2 = r1.ready();
+      p3 = r2.ready();
 
-    await expect(p1).rejects.toEqual(error);
-    await expect(p2).rejects.toEqual(error);
+      r1.cancel('cancel');
+
+      await expect(p1).rejects.toEqual(error);
+      await expect(p2).rejects.toEqual(error);
+      await expect(p3).resolves.toEqual([]);
+    });
   });
 
   it('should cancel pending requests on unmount', async () => {

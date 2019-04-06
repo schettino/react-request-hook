@@ -64,7 +64,12 @@ describe('useResource', () => {
       ['userId'],
     );
 
-    await wait(() => expect(hook.users.data).toEqual({id: '1', name: 'luke'}));
+    await act(async () => {
+      await wait(() =>
+        expect(hook.users.data).toEqual({id: '1', name: 'luke'}),
+      );
+    });
+
     expect(hook.users.isLoading).toEqual(false);
     expect(hook.users.error).toEqual(null);
     expect(hook.users.cancel).toEqual(expect.any(Function));
@@ -74,7 +79,9 @@ describe('useResource', () => {
     adapter.onGet('/users').reply(200, []);
 
     const {hook, unmount} = setup();
-    act(() => hook.getUsers());
+    act(() => {
+      hook.getUsers();
+    });
     unmount();
 
     await wait(() => expect(onRequestCancel).toHaveBeenCalledTimes(1));
@@ -105,7 +112,10 @@ describe('useResource', () => {
       </Provider>,
     );
 
-    await wait(() => expect(onSuccess).toHaveBeenCalledTimes(1));
+    await act(async () => {
+      await wait(() => expect(onSuccess).toHaveBeenCalledTimes(1));
+    });
+
     expect(onSuccess).toHaveBeenCalledTimes(1);
     expect(onSuccess).toHaveBeenCalledWith({id: '2', name: 'vader'});
     expect(onRequestCancel).toHaveBeenCalledTimes(1);
@@ -123,7 +133,10 @@ describe('useResource', () => {
       hook.getUsers();
     });
 
-    await wait(() => expect(hook.users.data).toEqual([]));
+    await act(async () => {
+      await wait(() => expect(hook.users.data).toEqual([]));
+    });
+
     expect(hook.users.error).toEqual(null);
     expect(hook.users.isLoading).toEqual(false);
     expect(onRequestCancel).toHaveBeenCalledTimes(1);
@@ -140,8 +153,10 @@ describe('useResource', () => {
     act(() => {
       hook.users.cancel();
     });
+    await act(async () => {
+      await wait(() => expect(onRequestCancel).toHaveBeenCalledTimes(1));
+    });
 
-    await wait(() => expect(onRequestCancel).toHaveBeenCalledTimes(1));
     expect(hook.users.data).toEqual(null);
     expect(hook.users.error).toEqual(null);
     expect(hook.users.isLoading).toEqual(false);
@@ -152,18 +167,17 @@ describe('useResource', () => {
 
     const {hook} = setup();
 
-    act(() => {
+    await act(async () => {
       hook.getUsers();
+      await wait(() =>
+        expect(hook.users.error).toEqual({
+          code: 500,
+          data: {message: 'Internal Error'},
+          isCancel: false,
+          message: 'Request failed with status code 500',
+        }),
+      );
     });
-
-    await wait(() =>
-      expect(hook.users.error).toEqual({
-        code: 500,
-        data: {message: 'Internal Error'},
-        isCancel: false,
-        message: 'Request failed with status code 500',
-      }),
-    );
 
     expect(hook.users.cancel).toEqual(expect.any(Function));
     expect(hook.users.data).toEqual(null);
