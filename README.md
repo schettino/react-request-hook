@@ -43,12 +43,16 @@ npm install --save react-request-hook axios
 ## Quick Start
 
 ```jsx
-// Bootstrap
 import {RequestProvider} from 'react-request-hook';
 import axios from 'axios';
 
+// More info about configuration: https://github.com/axios/axios#axioscreateconfig
+const axiosInstance = axios.create({
+  baseURL: 'https://example.com/'
+})
+
 ReactDOM.render(
-  <RequestProvider value={axios}>
+  <RequestProvider value={axiosInstance}>
     <App />
   </RequestProvider>,
   document.getElementById('root'),
