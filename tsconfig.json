@@ -27,11 +27,10 @@
     "noEmit": true,
     "resolveJsonModule": true,
     "skipLibCheck": false,
-    "strict": true,
-    "isolatedModules": true
+    "strict": true
   },
   "include": [
-    "src"
+    "src/**/*.ts"
   ],
   "exclude": [
     "node_modules",
