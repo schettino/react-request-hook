@@ -36,7 +36,7 @@ export function request<TPayload>(
   // we use 'payload' to enable non-ts applications to leverage type safety and
   // as a argument sugar that allow us to extract the payload type easily
   // @ts-ignore
-  paylaod?: TPayload,
+  payload?: TPayload,
   ): Resource<TPayload> {
   // we also ignore it here, so the payload value won't propagate as a possible
   // undefined, where its default value is actually `null`.
