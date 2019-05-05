@@ -61,7 +61,7 @@ export function useRequest<TRequest extends Request>(
 
       const ready = () => {
         setSources(prevSources => [...prevSources, source]);
-        return axiosInstance!({...config, cancelToken: source.token})
+        return axiosInstance({...config, cancelToken: source.token})
           .then(response => {
             removeCancelToken(source.token);
             return response.data;
