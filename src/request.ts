@@ -3,7 +3,7 @@ import axios, {AxiosRequestConfig, AxiosError, Canceler} from 'axios';
 export type Arguments<T> = T extends (...args: infer A) => any ? A : never;
 
 export interface Resource<TPayload> extends AxiosRequestConfig {
-  payload?: TPayload;
+  payload: TPayload;
 }
 
 export interface Request {
@@ -38,6 +38,9 @@ export function request<TPayload>(
   // @ts-ignore
   paylaod?: TPayload,
   ): Resource<TPayload> {
+  // we also ignore it here, so the payload value won't propagate as a possible
+  // undefined, where its default value is actually `null`.
+  // @ts-ignore
   return config;
 }
 
