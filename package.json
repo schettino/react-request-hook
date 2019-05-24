@@ -2,9 +2,12 @@
   "name": "react-request-hook",
   "version": "0.0.0-development",
   "description": "Managed request calls made easy by React Hooks",
-  "author": "Matheus Schettino",
+  "author": {
+    "name": "Matheus Schettino",
+    "email": "schettino2@gmail.com"
+  },
   "license": "MIT",
-  "repository": "schettino/react-request-hook",
+  "repository": "https://github.com/schettino/react-request-hook.git",
   "main": "dist/index.js",
   "module": "dist/index.es.js",
   "jsnext:main": "dist/index.es.js",
