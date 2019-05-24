@@ -29,7 +29,10 @@ type Action =
   | {type: 'error'; error: RequestError}
   | {type: 'reset' | 'start'};
 
-function getNextState(state: RequestState<any>, action: Action) {
+function getNextState(
+  state: RequestState<any>,
+  action: Action,
+): RequestState<any> {
   return {
     data: action.type === 'success' ? action.data : state.data,
     error: action.type === 'error' ? action.error : undefined,
