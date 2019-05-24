@@ -3,7 +3,7 @@ import axios, {AxiosRequestConfig, AxiosError, Canceler} from 'axios';
 export type Arguments<T> = T extends (...args: infer A) => any ? A : never;
 
 export interface Resource<TPayload> extends AxiosRequestConfig {
-  payload: TPayload;
+  payload?: TPayload;
 }
 
 export interface Request {
