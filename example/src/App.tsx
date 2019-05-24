@@ -1,15 +1,15 @@
 import * as React from 'react';
-import {Sandbox} from './Sandbox';
-import {UserList} from './components/UserList';
 import {
   Route,
   Redirect,
   withRouter,
   RouteComponentProps,
 } from 'react-router-dom';
+import {Menu} from 'grommet';
+import {Sandbox} from './Sandbox';
+import {UserList} from './components/UserList';
 import SearchUser from './components/SearchUser';
 import {Styles, Main, Header, Container} from './styles';
-import {Menu} from 'grommet';
 import {UserListCached} from './components/UserListCached';
 import {SearchUserOptmized} from './components/SearchUserOptimized';
 
