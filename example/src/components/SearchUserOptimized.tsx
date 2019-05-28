@@ -1,6 +1,6 @@
 import React, {useState, useEffect} from 'react';
 import useDebounce from '../useDebounce';
-import {useResource} from 'react-request-hook';
+import {useResource} from '../react-request-hook';
 import {TextInput, Image, Text} from 'grommet';
 import api from '../api';
 import {Row} from '../styles';

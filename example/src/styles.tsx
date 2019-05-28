@@ -11,16 +11,17 @@ export const Main = styled.main`
   display: flex;
   max-width: 960px;
   width: 100%;
-  margin: 6rem;
   padding: 1rem;
   overflow: hidden;
   flex-grow: 1;
+  margin: 0 auto;
   flex-direction: column;
   background-color: white;
   border-radius: 6px;
   box-shadow: 0 16px 38px -12px rgba(0, 0, 0, 0.56),
     0 4px 25px 0px rgba(0, 0, 0, 0.12), 0 8px 10px -5px rgba(0, 0, 0, 0.2);
 
+  max-height: calc(100vh - 12rem);
   @media (max-width: 960px) {
     max-width: calc(100% - 16px);
     padding: 8px;
@@ -40,9 +41,7 @@ export const FlexRow = styled.div<{justify?: string}>`
 export const Container = styled.div`
   display: flex;
   flex-direction: column;
-  flex-grow: 1;
   padding: 4px;
-  max-height: calc(100% - 80px);
   overflow-y: scroll;
 `;
 
@@ -153,6 +152,7 @@ export const Styles = createGlobalStyle`
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
     flex: 1;
     background: linear-gradient(135deg, #5C33B8, #A267D7);
   }

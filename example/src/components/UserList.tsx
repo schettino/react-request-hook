@@ -1,6 +1,6 @@
 import React, {useState, useEffect} from 'react';
 import {Box, InfiniteScroll, Text, Image} from 'grommet';
-import {useResource} from 'react-request-hook';
+import {useResource} from '../react-request-hook';
 import api, {User} from '../api';
 import {Row} from '../styles';
 

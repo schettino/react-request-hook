@@ -12,7 +12,7 @@
 [![PRs Welcome][prs-badge]][prs]
 [![MIT License][license-badge]][license]
 
-[Codesandbox][codesandbox]
+[![Edit react-request-hook-examples](https://codesandbox.io/static/img/play-codesandbox.svg)][codesandbox]
 
 <!-- prettier-ignore-end -->
 
@@ -48,8 +48,8 @@ import axios from 'axios';
 
 // More info about configuration: https://github.com/axios/axios#axioscreateconfig
 const axiosInstance = axios.create({
-  baseURL: 'https://example.com/'
-})
+  baseURL: 'https://example.com/',
+});
 
 ReactDOM.render(
   <RequestProvider value={axiosInstance}>
@@ -279,6 +279,6 @@ MIT
 [prs]: http://makeapullrequest.com
 [bundle-size]: https://bundlephobia.com/result?p=react-request-hook@latest
 [bundle-size-badge]: https://badgen.net/bundlephobia/minzip/react-request-hook@latest
-[codesandbox]: https://codesandbox.io/s/github/schettino/react-request-hook/tree/master/example
+[codesandbox]: https://codesandbox.io/s/github/schettino/react-request-hook-examples/tree/master/?fontsize=14&view=preview
 
 <!-- prettier-ignore-end -->
