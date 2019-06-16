@@ -1,4 +1,4 @@
-import {request} from 'react-request-hook';
+import {request} from './react-request-hook';
 
 export type User = {
   id: number;

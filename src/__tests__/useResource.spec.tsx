@@ -66,7 +66,7 @@ describe('useResource', () => {
 
     await wait(() => expect(hook.users.data).toEqual({id: '1', name: 'luke'}));
     expect(hook.users.isLoading).toEqual(false);
-    expect(hook.users.error).toEqual(null);
+    expect(hook.users.error).toEqual(undefined);
     expect(hook.users.cancel).toEqual(expect.any(Function));
   });
 
@@ -124,7 +124,7 @@ describe('useResource', () => {
     });
 
     await wait(() => expect(hook.users.data).toEqual([]));
-    expect(hook.users.error).toEqual(null);
+    expect(hook.users.error).toEqual(undefined);
     expect(hook.users.isLoading).toEqual(false);
     expect(onRequestCancel).toHaveBeenCalledTimes(1);
   });
@@ -142,8 +142,8 @@ describe('useResource', () => {
     });
 
     await wait(() => expect(onRequestCancel).toHaveBeenCalledTimes(1));
-    expect(hook.users.data).toEqual(null);
-    expect(hook.users.error).toEqual(null);
+    expect(hook.users.data).toEqual(undefined);
+    expect(hook.users.error).toEqual(undefined);
     expect(hook.users.isLoading).toEqual(false);
   });
 
@@ -166,7 +166,7 @@ describe('useResource', () => {
     );
 
     expect(hook.users.cancel).toEqual(expect.any(Function));
-    expect(hook.users.data).toEqual(null);
+    expect(hook.users.data).toEqual(undefined);
     expect(hook.users.isLoading).toEqual(false);
   });
 });

@@ -14,8 +14,8 @@ const REQUEST_CLEAR_MESSAGE =
   'A new request has been made before completing the last one';
 
 type RequestState<TRequest extends Request> = {
-  data: Payload<TRequest> | null;
-  error: RequestError | null;
+  data?: Payload<TRequest>;
+  error?: RequestError;
   isLoading: boolean;
 };
 
@@ -29,10 +29,13 @@ type Action =
   | {type: 'error'; error: RequestError}
   | {type: 'reset' | 'start'};
 
-function getNextState(state: RequestState<any>, action: Action) {
+function getNextState(
+  state: RequestState<any>,
+  action: Action,
+): RequestState<any> {
   return {
     data: action.type === 'success' ? action.data : state.data,
-    error: action.type === 'error' ? action.error : null,
+    error: action.type === 'error' ? action.error : undefined,
     isLoading: action.type === 'start' ? true : false,
   };
 }
@@ -42,10 +45,7 @@ export function useResource<TRequest extends Request>(
   defaultParams?: Arguments<TRequest>,
 ): UseResourceResult<TRequest> {
   const [{clear}, createRequest] = useRequest(fn);
-
   const [state, dispatch] = useReducer(getNextState, {
-    error: null,
-    data: null,
     isLoading: Boolean(defaultParams),
   });
 

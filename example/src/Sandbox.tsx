@@ -5,7 +5,7 @@ import axios, {
   AxiosError,
   AxiosInstance,
 } from 'axios';
-import {RequestProvider} from 'react-request-hook';
+import {RequestProvider} from './react-request-hook';
 import {useDispatch} from 'redux-react-hook';
 import {Counter, FlexRow} from './styles';
 

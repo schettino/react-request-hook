@@ -35,9 +35,11 @@ export function request<TPayload>(
   config: AxiosRequestConfig,
   // we use 'payload' to enable non-ts applications to leverage type safety and
   // as a argument sugar that allow us to extract the payload type easily
+  _payload?: TPayload,
+): Resource<TPayload> {
+  // we also ignore it here, so the payload value won't propagate as a possible
+  // undefined, where its default value is actually `null`.
   // @ts-ignore
-  paylaod?: TPayload,
-  ): Resource<TPayload> {
   return config;
 }
 
