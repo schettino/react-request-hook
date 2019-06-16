@@ -29,9 +29,9 @@
     "fast-deep-equal": "^2.0.1"
   },
   "peerDependencies": {
-    "axios": "^0.18.1",
-    "react": "^16.8.2",
-    "react-dom": "^16.8.2"
+    "axios": ">=0.15",
+    "react": ">=16.8.2",
+    "react-dom": ">=16.8.2"
   },
   "jest": {
     "collectCoverageFrom": [
