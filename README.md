@@ -65,7 +65,7 @@ function UserProfile(props) {
   const [profile, getProfile] = useResource(id => ({
     url: `/user/${id}`,
     method: 'GET'
-  })
+  }))
 
   useEffect(() => getProfile(props.userId), [])
 
