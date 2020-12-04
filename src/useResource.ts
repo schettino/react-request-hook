@@ -10,6 +10,8 @@ import {
   Arguments,
 } from './request';
 
+import {useMountedState} from './utils';
+
 const REQUEST_CLEAR_MESSAGE =
   'A new request has been made before completing the last one';
 
@@ -44,6 +46,7 @@ export function useResource<TRequest extends Request>(
   fn: TRequest,
   defaultParams?: Arguments<TRequest>,
 ): UseResourceResult<TRequest> {
+  const getMountedState = useMountedState();
   const [{clear}, createRequest] = useRequest(fn);
   const [state, dispatch] = useReducer(getNextState, {
     isLoading: Boolean(defaultParams),
@@ -56,15 +59,18 @@ export function useResource<TRequest extends Request>(
       clear(REQUEST_CLEAR_MESSAGE);
       const {ready, cancel} = createRequest(...(args as Arguments<TRequest>));
 
-      (async function flow() {
-        try {
-          dispatch({type: 'start'});
-          const data = await ready();
-          dispatch({type: 'success', data});
-        } catch (error) {
-          if (!error.isCancel) dispatch({type: 'error', error});
-        }
-      })();
+      if (getMountedState()) {
+        (async function flow() {
+          try {
+            dispatch({type: 'start'});
+            const data = await ready();
+            dispatch({type: 'success', data});
+          } catch (error) {
+            if (!error.isCancel && getMountedState())
+              dispatch({type: 'error', error});
+          }
+        })();
+      }
 
       return cancel;
     },
@@ -81,26 +87,34 @@ export function useResource<TRequest extends Request>(
 
     // We perform an deep equality check of the params and rely on React's bail out
     // to control future request calls made passing default params as dependency
-    setRequestParams(current =>
-      isEqual(current, defaultParams) ? current : defaultParams,
-    );
+    if (getMountedState()) {
+      setRequestParams(current =>
+        isEqual(current, defaultParams) ? current : defaultParams,
+      );
+    }
   }, defaultParams);
 
-  useEffect(() => {
-    let canceller: Canceler = () => {};
-    if (requestParams) {
-      canceller = request(...requestParams);
-    }
-    return canceller;
-  }, [requestParams]);
+  useEffect(
+    () => {
+      let canceller: Canceler = () => {};
+      if (requestParams) {
+        canceller = request(...requestParams);
+      }
+      return canceller;
+    },
+    [requestParams],
+  );
 
-  return useMemo(() => {
-    const cancel = (message?: string) => {
-      dispatch({type: 'reset'});
-      clear(message);
-    };
+  return useMemo(
+    () => {
+      const cancel = (message?: string) => {
+        getMountedState() && dispatch({type: 'reset'});
+        clear(message);
+      };
 
-    const result: UseResourceResult<TRequest> = [{...state, cancel}, request];
-    return result;
-  }, [state, request]);
+      const result: UseResourceResult<TRequest> = [{...state, cancel}, request];
+      return result;
+    },
+    [state, request],
+  );
 }
