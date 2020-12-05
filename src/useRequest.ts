@@ -13,6 +13,8 @@ import {
 } from './request';
 import {RequestContext} from './requestContext';
 
+import {useMountedState} from './utils';
+
 export type UseRequestResult<TRequest extends Request> = [
   {
     hasPending: boolean;
@@ -33,6 +35,7 @@ class MissingProviderError extends Error {
 export function useRequest<TRequest extends Request>(
   fn: TRequest,
 ): UseRequestResult<TRequest> {
+  const getMountedState = useMountedState();
   const axiosInstance = useContext(RequestContext);
   if (!axiosInstance) {
     throw new MissingProviderError();
@@ -42,7 +45,7 @@ export function useRequest<TRequest extends Request>(
   const mountedRef = useRef(true);
 
   const removeCancelToken = (cancelToken: CancelToken) => {
-    if (mountedRef.current) {
+    if (mountedRef.current && getMountedState()) {
       setSources(prevSources =>
         prevSources.filter(source => source.token !== cancelToken),
       );
@@ -50,9 +53,12 @@ export function useRequest<TRequest extends Request>(
   };
 
   const callFn = useRef(fn);
-  useEffect(() => {
-    callFn.current = fn;
-  }, [fn]);
+  useEffect(
+    () => {
+      callFn.current = fn;
+    },
+    [fn],
+  );
 
   const request = useCallback(
     (...args: Arguments<TRequest> | any[]) => {
@@ -60,7 +66,9 @@ export function useRequest<TRequest extends Request>(
       const source = axios.CancelToken.source();
 
       const ready = () => {
-        setSources(prevSources => [...prevSources, source]);
+        if (getMountedState()) {
+          setSources(prevSources => [...prevSources, source]);
+        }
         return axiosInstance({...config, cancelToken: source.token})
           .then(response => {
             removeCancelToken(source.token);
@@ -85,7 +93,7 @@ export function useRequest<TRequest extends Request>(
       if (sources.length > 0) {
         sources.map(source => source.cancel(message));
         /* istanbul ignore next */
-        if (mountedRef.current) {
+        if (mountedRef.current && getMountedState()) {
           setSources([]);
         }
       }
